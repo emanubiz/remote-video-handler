@@ -1,0 +1,316 @@
+body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: #0f172a; /* Dark background */
+    color: #e2e8f0; /* Light text */
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.AdminApp {
+    padding: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+    background: #1e293b; /* Slightly lighter dark background */
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2.2em;
+    font-weight: 700;
+    color: #e0f2fe; /* Light blueish color for contrast */
+}
+
+h2 {
+    color: #f1f5f9;
+    margin-bottom: 20px;
+    font-size: 1.2em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 10px;
+}
+
+.controls-section, .clients-section {
+    margin-bottom: 25px;
+    padding: 20px;
+    border-radius: 10px;
+    background: #334155; /* Medium dark background */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.controls-section div {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.controls-section label {
+    font-weight: 500;
+    min-width: 120px;
+    color: #cbd5e1;
+    font-size: 0.9em;
+}
+
+.controls-section select {
+    flex-grow: 1;
+    padding: 10px 12px;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    background: #1e293b;
+    color: #e2e8f0;
+    font-size: 0.9em;
+    cursor: pointer;
+}
+
+.controls-section select:focus {
+    outline: none;
+    border-color: #60a5fa; /* Blue focus */
+}
+
+.controls-section button {
+    background: #60a5fa; /* Blue button */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.85em;
+    text-transform: uppercase;
+}
+
+.controls-section button:hover {
+    background: #3b82f6; /* Darker blue on hover */
+}
+
+.video-actions button {
+    background: #22c55e; /* Green button */
+}
+
+.video-actions button:hover {
+    background: #16a34a; /* Darker green on hover */
+}
+
+.opacity-control button {
+    background: #f97316; /* Orange button */
+}
+
+.opacity-control button:hover {
+    background: #ea580c; /* Darker orange on hover */
+}
+
+.client-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 15px;
+}
+
+.client-item {
+    background: #334155;
+    border: 1px solid #475569;
+    border-left: 5px solid #60a5fa; /* Blue left border */
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.client-item h3 {
+    margin: 0 0 10px 0;
+    color: #f1f5f9;
+    font-size: 1.05em;
+    font-weight: 600;
+}
+
+.client-item p {
+    margin: 0;
+    font-size: 0.85em;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.client-video-selection {
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #1e293b;
+    border-radius: 8px;
+    border: 1px solid #475569;
+}
+
+.client-video-selection label {
+    font-weight: 500;
+    min-width: 100px;
+    color: #cbd5e1;
+    font-size: 0.85em;
+}
+
+.client-video-selection select {
+    flex-grow: 1;
+    padding: 8px 10px;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    background: #0f172a;
+    color: #e2e8f0;
+    cursor: pointer;
+    font-size: 0.85em;
+}
+
+.client-video-selection select:focus {
+    outline: none;
+    border-color: #60a5fa;
+}
+
+.client-item .client-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.client-item .client-actions button {
+    background: #60a5fa;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8em;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.client-item .client-actions button:hover {
+    background: #3b82f6;
+}
+
+.status-pending {
+    color: #f59e0b; /* Orange */
+    font-weight: 600;
+    padding: 3px 8px;
+    background: rgba(245, 158, 11, 0.2);
+    border-radius: 4px;
+    font-size: 0.75em;
+    text-transform: uppercase;
+}
+
+.status-complete {
+    color: #22c55e; /* Green */
+    font-weight: 600;
+    padding: 3px 8px;
+    background: rgba(34, 197, 94, 0.2);
+    border-radius: 4px;
+    font-size: 0.75em;
+    text-transform: uppercase;
+}
+
+.status-error {
+    color: #ef4444; /* Red */
+    font-weight: 600;
+    padding: 3px 8px;
+    background: rgba(239, 68, 68, 0.2);
+    border-radius: 4px;
+    font-size: 0.75em;
+    text-transform: uppercase;
+}
+
+.ready-icon, .error-icon {
+    font-size: 1em;
+    margin-left: 3px;
+}
+
+.ready-icon { color: #22c55e; }
+.error-icon { color: #ef4444; }
+
+button:disabled {
+    background: #475569;
+    color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.status-connesso {
+    color: #22c55e;
+    font-weight: 600;
+    padding: 3px 8px;
+    background: rgba(34, 197, 94, 0.2);
+    border-radius: 4px;
+    font-size: 0.75em;
+    text-transform: uppercase;
+}
+
+.status-disconnesso {
+    color: #ef4444;
+    font-weight: 600;
+    padding: 3px 8px;
+    background: rgba(239, 68, 68, 0.2);
+    border-radius: 4px;
+    font-size: 0.75em;
+    text-transform: uppercase;
+}
+
+.status-playing {
+    color: #22c55e;
+    font-weight: 500;
+    font-size: 0.8em;
+    text-transform: uppercase;
+}
+
+.status-paused, .status-ended {
+    color: #f59e0b;
+    font-weight: 500;
+    font-size: 0.8em;
+    text-transform: uppercase;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .AdminApp {
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 1.8em;
+    }
+
+    h2 {
+        font-size: 1.1em;
+    }
+
+    .controls-section div {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .controls-section button {
+        width: 100%;
+    }
+
+    .client-video-selection {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .client-item .client-actions {
+        flex-direction: column;
+    }
+
+    .client-item .client-actions button {
+        width: 100%;
+    }
+}

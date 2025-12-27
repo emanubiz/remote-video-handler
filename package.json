@@ -1,0 +1,60 @@
+{
+  "name": "remotevideo",
+  "version": "1.0.0",
+  "description": "Full-stack monorepo for remote video control",
+  "main": "server/index.js",
+  "scripts": {
+    "install:all": "npm install --prefix ./client-webapp && npm install --prefix ./admin-frontend",
+    "server": "node server/index.js",
+    "client:build": "set PUBLIC_URL=/client&& npm run build --prefix client-webapp",
+    "admin:build": "npm run build --prefix admin-frontend",
+    "build:all": "npm run client:build && npm run admin:build",
+    "dev:server": "nodemon server/index.js",
+    "dev:client": "npm start --prefix client-webapp",
+    "dev:admin": "npm start --prefix admin-frontend",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:admin\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "web-vitals": "^2.1.4",
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
+    "cors": "^2.8.5",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.0",
+    "react-scripts": "^5.0.1",
+    "workbox-background-sync": "^6.6.1",
+    "workbox-broadcast-update": "^6.6.1",
+    "workbox-cacheable-response": "^6.6.1",
+    "workbox-core": "^6.6.1",
+    "workbox-expiration": "^6.6.1",
+    "workbox-google-analytics": "^6.6.1",
+    "workbox-navigation-preload": "^6.6.1",
+    "workbox-precaching": "^6.6.1",
+    "workbox-range-requests": "^6.6.1",
+    "workbox-routing": "^6.6.1",
+    "workbox-strategies": "^6.6.1",
+    "workbox-streams": "^6.6.1",
+    "workbox-window": "^6.6.1"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
