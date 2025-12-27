@@ -113,25 +113,18 @@ io.on('connection', (socket) => {
             videoDownloadStatus: clientCurrentState.videoDownloadStatus,
             downloadProgress: clientCurrentState.downloadProgress
         });
-        console.log(`[SERVER] Inviato stato iniziale a ${clientId}. Video: ${clientCurrentState.currentVideoFilename || 'Nessuno'}, Download status: ${clientCurrentState.videoDownloadStatus}, Progress: ${clientCurrentState.downloadProgress.cachedCount}/${clientCurrentState.downloadProgress.totalCount}`);
+        console.log(`[SERVER] Inviato stato iniziale a ${clientId}. Video: ${clientCurrentState.currentVideoFilename || 'Nessuno'}`);
     });
 
     socket.on('clientStatusUpdate', (clientId, statusUpdate) => {
         if (clients[clientId]) {
-            const oldStatus = { ...clients[clientId] };
             Object.assign(clients[clientId], statusUpdate);
-            console.log(`[SERVER] Stato client ${clientId} aggiornato:`, statusUpdate);
-            
-            if (statusUpdate.videoDownloadStatus || (statusUpdate.downloadProgress && (oldStatus.downloadProgress.cachedCount !== statusUpdate.downloadProgress.cachedCount || oldStatus.downloadProgress.totalCount !== statusUpdate.downloadProgress.totalCount))) {
-                 console.log(`[SERVER] Download Status for ${clientId}: ${clients[clientId].videoDownloadStatus}, Progress: ${clients[clientId].downloadProgress.cachedCount}/${clients[clientId].downloadProgress.totalCount}`);
-            }
-            
             io.emit('clientListUpdate', Object.values(clients).map(({ socketId, ...rest }) => rest));
         }
     });
 
     socket.on('adminCommand', ({ targetClientId, command, videoId, videoFilename, opacity }) => {
-        console.log(`[SERVER] Comando admin ricevuto: ${command} per ${targetClientId || 'tutti i client'} con video ${videoId} e opacità ${opacity}`);
+        console.log(`[SERVER] Comando admin ricevuto: "${command}" per ${targetClientId || 'tutti i client'} | Video: ${videoId} | Opacità: ${opacity}`);
 
         const videoToPlay = videosData.find(v => v.id === videoId);
         const actualVideoFilename = videoToPlay ? videoToPlay.filename : null;
@@ -144,15 +137,16 @@ io.on('connection', (socket) => {
                     videoFilename: actualVideoFilename,
                     opacity
                 });
-                if (command === 'changeVideo' || command === 'play') {
+
+                if (command === 'changeVideo') {
                     client.currentVideoId = videoId;
                     client.currentVideoFilename = actualVideoFilename;
-                    console.log(`[SERVER] Aggiornato stato client ${client.clientId} con video: ${actualVideoFilename} a causa di comando ${command}`);
                 }
                 if (command === 'setOpacity') {
                     client.opacity = opacity;
-                    console.log(`[SERVER] Aggiornata opacità client ${client.clientId} a: ${opacity} a causa di comando ${command}`);
                 }
+            } else {
+                console.warn(`[SERVER] Socket non trovato per client ${client.clientId} durante comando ${command}`);
             }
         };
 
@@ -160,7 +154,10 @@ io.on('connection', (socket) => {
             Object.values(clients).forEach(processClientCommand);
         } else if (clients[targetClientId]) {
             processClientCommand(clients[targetClientId]);
+        } else {
+            console.warn(`[SERVER] Client ${targetClientId} non trovato per comando ${command}`);
         }
+
         io.emit('clientListUpdate', Object.values(clients).map(({ socketId, ...rest }) => rest));
     });
 
@@ -173,7 +170,6 @@ io.on('connection', (socket) => {
         }
         console.log(`[SERVER] Socket disconnesso: ${socket.id}`);
     });
-
 });
 
 server.listen(PORT, () => {
