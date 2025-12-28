@@ -115,7 +115,8 @@ h2 {
     list-style: none;
     padding: 0;
     display: grid;
-    gap: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    gap: 20px;
 }
 
 .client-item {
@@ -319,12 +320,21 @@ button:disabled {
 
 
 /* Responsive */
+@media (max-width: 1024px) {
+    .client-list {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    }
+}
+
 @media (max-width: 768px) {
     .AdminApp { padding: 20px; }
     h1 { font-size: 1.8em; }
     h2 { font-size: 1.1em; }
     .controls-section div { flex-direction: column; align-items: stretch; }
     .controls-section button { width: 100%; }
+    .client-list {
+        grid-template-columns: 1fr;
+    }
     .client-video-selection { flex-direction: column; align-items: stretch; }
     .client-opacity-control { flex-direction: column; align-items: stretch; }
     .client-item .client-actions { flex-direction: column; }

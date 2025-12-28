@@ -2,35 +2,44 @@
   "name": "remotevideo",
   "version": "1.0.0",
   "description": "Full-stack monorepo for remote video control",
-  "main": "server/index.js",
+  "main": "server/src/server.js",
   "scripts": {
     "install:all": "npm install --prefix ./client-webapp && npm install --prefix ./admin-frontend",
-    "server": "node server/index.js",
-    "client:build": "set PUBLIC_URL=/client&& npm run build --prefix client-webapp",
-    "admin:build": "npm run build --prefix admin-frontend",
-    "build:all": "npm run client:build && npm run admin:build",
-    "dev:server": "nodemon server/index.js",
+    "server": "node server/src/server.js",
+    "dev:server": "nodemon server/src/server.js",
     "dev:client": "npm start --prefix client-webapp",
     "dev:admin": "npm start --prefix admin-frontend",
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:admin\""
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:admin\"",
+
+    "clean:build": "rimraf server/static/client-webapp server/static/admin-frontend",
+
+    "copy:client": "node -e \"require('fs').cpSync('client-webapp/build', 'server/static/client-webapp', {recursive: true, force: true})\"",
+    "copy:admin": "node -e \"require('fs').cpSync('admin-frontend/build', 'server/static/admin-frontend', {recursive: true, force: true})\"",
+
+    "client:build": "set PUBLIC_URL=/client&& npm run build --prefix client-webapp && npm run copy:client",
+    "admin:build": "npm run build --prefix admin-frontend && npm run copy:admin",
+
+    "build:all": "npm run clean:build && npm run client:build && npm run admin:build",
+
+    "start": "npm run build:all && npm run server"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
-    "web-vitals": "^2.1.4",
+    "concurrently": "^8.2.2",
+    "cors": "^2.8.5",
     "express": "^4.19.2",
+    "nodemon": "^3.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "^5.0.1",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
-    "cors": "^2.8.5",
-    "concurrently": "^8.2.2",
-    "nodemon": "^3.1.0",
-    "react-scripts": "^5.0.1",
+    "web-vitals": "^2.1.4",
     "workbox-background-sync": "^6.6.1",
     "workbox-broadcast-update": "^6.6.1",
     "workbox-cacheable-response": "^6.6.1",
@@ -56,5 +65,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "qrcode-terminal": "^0.12.0",
+    "rimraf": "^5.0.0"
   }
 }

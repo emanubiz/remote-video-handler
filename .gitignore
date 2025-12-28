@@ -3,3 +3,7 @@
 /admin-frontend/build
 /client-webapp/build
 /client-webapp/node_modules
+/server/static/videos
+/server/static/admin-frontend
+/server/static/client-webapp
+/remote-video-handler.tar

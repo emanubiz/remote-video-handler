@@ -14,18 +14,11 @@ const generateClientId = () => {
     return clientId;
 };
 
-const areDownloadProgressEqual = (p1, p2) => {
-    if (!p1 || !p2) return p1 === p2;
-    return p1.cachedCount === p2.cachedCount && p1.totalCount === p2.totalCount;
-};
-
 function App() {
     const [clientId] = useState(generateClientId());
     const [currentVideoFilename, setCurrentVideoFilename] = useState(null);
     const [currentVideoId, setCurrentVideoId] = useState(null);
     const [status, setStatus] = useState('Connessione...');
-    const [videoList, setVideoList] = useState([]);
-    const [isFullScreen, setIsFullScreen] = useState(false);
     const [opacity, setOpacity] = useState(1);
     const [videoDownloadStatus, setVideoDownloadStatus] = useState('pending');
     const [downloadProgress, setDownloadProgress] = useState({ cachedCount: 0, totalCount: 0 });
@@ -40,7 +33,7 @@ function App() {
     const opacityRef = useRef(opacity);
     const videoDownloadStatusRef = useRef(videoDownloadStatus);
     const downloadProgressRef = useRef(downloadProgress);
-    const videoListRef = useRef(videoList);
+    const videoListRef = useRef([]); // Manteniamo un ref per la lista video se necessario altrove
     const statusRef = useRef(status);
 
     useEffect(() => {
@@ -49,9 +42,8 @@ function App() {
         opacityRef.current = opacity;
         videoDownloadStatusRef.current = videoDownloadStatus;
         downloadProgressRef.current = downloadProgress;
-        videoListRef.current = videoList;
         statusRef.current = status;
-    }, [currentVideoId, currentVideoFilename, opacity, videoDownloadStatus, downloadProgress, videoList, status]);
+    }, [currentVideoId, currentVideoFilename, opacity, videoDownloadStatus, downloadProgress, status]);
 
     const sendClientStatusInternal = useRef();
 
@@ -79,7 +71,6 @@ function App() {
         if (elem.requestFullscreen) elem.requestFullscreen();
         else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
         else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
-        setIsFullScreen(true);
         console.log('[CLIENT] Entrato in modalità Fullscreen.');
     }, []);
 
@@ -97,7 +88,7 @@ function App() {
         try {
             const response = await fetch(`${SERVER_URL}/api/videos`);
             const videos = await response.json();
-            setVideoList(videos);
+            videoListRef.current = videos; // Aggiorna il ref
             console.log('[CLIENT] Lista video dal server:', videos);
 
             if (videos.length === 0) {
@@ -248,16 +239,6 @@ function App() {
                     }
                     break;
 
-                case 'stop':
-                    if (videoRef.current) {
-                        videoRef.current.pause();
-                        videoRef.current.currentTime = 0;
-                        statusUpdate.clientVideoStatus = 'stopped';
-                        clientStateChanged = true;
-                        console.log('[CLIENT] Comando STOP eseguito: video fermato e riavvolto');
-                    }
-                    break;
-
                 case 'changeVideo':
                     if (videoId !== currentVideoIdRef.current || videoFilename !== currentVideoFilenameRef.current) {
                         setCurrentVideoId(videoId);
@@ -319,33 +300,22 @@ function App() {
         }
     }, [currentVideoFilename]);
 
-    useEffect(() => {
-        const handleFullscreenChange = () => {
-            setIsFullScreen(!!document.fullscreenElement);
-        };
-        document.addEventListener('fullscreenchange', handleFullscreenChange);
-        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-        document.addEventListener('msfullscreenchange', handleFullscreenChange);
-        return () => {
-            document.removeEventListener('fullscreenchange', handleFullscreenChange);
-            document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-            document.removeEventListener('msfullscreenchange', handleFullscreenChange);
-        };
-    }, []);
-
     const handleVideoPlay = useCallback(() => {
+        if (document.hidden) return; // Non inviare update se la pagina non è visibile
         if (sendClientStatusInternal.current) {
             sendClientStatusInternal.current({ clientVideoStatus: 'playing' });
         }
     }, []);
 
     const handleVideoPause = useCallback(() => {
+        if (document.hidden) return; // Non inviare update se la pagina non è visibile
         if (sendClientStatusInternal.current) {
             sendClientStatusInternal.current({ clientVideoStatus: 'paused' });
         }
     }, []);
 
     const handleVideoEnded = useCallback(() => {
+        if (document.hidden) return; // Non inviare update se la pagina non è visibile
         if (sendClientStatusInternal.current) {
             sendClientStatusInternal.current({ clientVideoStatus: 'ended' });
         }
