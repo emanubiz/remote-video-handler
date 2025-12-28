@@ -4,7 +4,7 @@ import { clientsClaim } from 'workbox-core';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching';
 import { registerRoute, NavigationRoute } from 'workbox-routing';
-import { CacheFirst, NetworkFirst } from 'workbox-strategies';
+import { NetworkFirst } from 'workbox-strategies';
 
 clientsClaim();
 
@@ -22,7 +22,7 @@ registerRoute(
     request.destination === 'image' ||
     request.destination === 'script' ||
     request.destination === 'style',
-  new CacheFirst({
+  new NetworkFirst({
     cacheName: 'static-resources',
     plugins: [
       new ExpirationPlugin({
@@ -35,7 +35,7 @@ registerRoute(
 
 registerRoute(
   ({ url }) => url.pathname.startsWith('/videos/') && url.pathname.endsWith('.mp4'),
-  new CacheFirst({
+  new NetworkFirst({
     cacheName: 'videos-cache',
     plugins: [
       new ExpirationPlugin({
@@ -62,32 +62,19 @@ self.addEventListener('message', (event) => {
               
               const cachingPromises = event.data.videos.map(async (videoUrl) => {
                   try {
-                      // Controlla se il video è già nella cache
-                      const response = await cache.match(videoUrl);
-                      if (response) {
-                          cachedVideosCount++;
-                          console.log(`Video ${videoUrl} già in cache. Cached: ${cachedVideosCount}/${totalVideos}`);
-                          // Invia aggiornamento di progresso anche per video già cacheati
-                          event.source.postMessage({
-                              type: 'VIDEOS_CACHING_PROGRESS',
-                              progress: cachedVideosCount / totalVideos,
-                              cachedCount: cachedVideosCount,
-                              totalCount: totalVideos
-                          });
-                          return; // Salta il fetch se già in cache
-                      }
-
-                      // Se non in cache, procedi con il fetch e l'aggiunta
-                      const request = new Request(videoUrl, { cache: 'no-cache' }); // Forza il fetch
+                      const request = new Request(videoUrl, { cache: 'reload' });
                       const responseFromNetwork = await fetch(request);
+                      
                       if (!responseFromNetwork.ok) {
                           throw new Error(`Failed to fetch ${videoUrl}: ${responseFromNetwork.statusText}`);
                       }
-                      await cache.put(request, responseFromNetwork.clone());
-                      cachedVideosCount++;
-                      console.log(`Video ${videoUrl} aggiunto alla cache. Cached: ${cachedVideosCount}/${totalVideos}`);
                       
-                      // Invia aggiornamento di progresso al client
+                      await cache.delete(videoUrl); 
+                      await cache.put(videoUrl, responseFromNetwork.clone());
+                      
+                      cachedVideosCount++;
+                      console.log(`Video ${videoUrl} aggiornato/aggiunto alla cache. Cached: ${cachedVideosCount}/${totalVideos}`);
+                      
                       event.source.postMessage({
                           type: 'VIDEOS_CACHING_PROGRESS',
                           progress: cachedVideosCount / totalVideos,
@@ -97,20 +84,32 @@ self.addEventListener('message', (event) => {
 
                   } catch (error) {
                       console.error(`Errore durante il caching di ${videoUrl}:`, error);
-                      // Non blocchiamo il processo per un singolo errore di video, ma lo registriamo.
-                      // Potremmo inviare un messaggio di errore specifico per quel video se necessario.
                   }
               });
 
-              // Attendi che tutte le operazioni di caching siano complete
               await Promise.allSettled(cachingPromises);
 
-              if (cachedVideosCount === totalVideos) {
+              const currentCachedKeys = await cache.keys();
+              const actuallyCachedVideos = event.data.videos.filter(videoUrl => 
+                  currentCachedKeys.some(key => key.url.endsWith(videoUrl))
+              ).length;
+
+
+              if (actuallyCachedVideos === totalVideos) {
                   console.log('Service Worker: Tutti i video sono stati processati (cacheati o tentato).');
-                  event.source.postMessage({ type: 'VIDEOS_CACHING_COMPLETE' });
+                  event.source.postMessage({ 
+                      type: 'VIDEOS_CACHING_COMPLETE',
+                      cachedCount: actuallyCachedVideos,
+                      totalCount: totalVideos
+                  });
               } else {
                   console.error('Service Worker: Caching video completato con errori o video mancanti.');
-                  event.source.postMessage({ type: 'VIDEOS_CACHING_ERROR', error: `Solo ${cachedVideosCount} di ${totalVideos} video sono stati cacheati con successo.` });
+                  event.source.postMessage({ 
+                      type: 'VIDEOS_CACHING_ERROR', 
+                      error: `Solo ${actuallyCachedVideos} di ${totalVideos} video sono stati cacheati con successo.`,
+                      cachedCount: actuallyCachedVideos,
+                      totalCount: totalVideos
+                  });
               }
           })()
       );

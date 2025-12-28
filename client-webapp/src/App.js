@@ -33,7 +33,7 @@ function App() {
     const opacityRef = useRef(opacity);
     const videoDownloadStatusRef = useRef(videoDownloadStatus);
     const downloadProgressRef = useRef(downloadProgress);
-    const videoListRef = useRef([]); // Manteniamo un ref per la lista video se necessario altrove
+    const videoListRef = useRef([]);
     const statusRef = useRef(status);
 
     useEffect(() => {
@@ -88,7 +88,7 @@ function App() {
         try {
             const response = await fetch(`${SERVER_URL}/api/videos`);
             const videos = await response.json();
-            videoListRef.current = videos; // Aggiorna il ref
+            videoListRef.current = videos;
             console.log('[CLIENT] Lista video dal server:', videos);
 
             if (videos.length === 0) {
@@ -142,14 +142,22 @@ function App() {
                     }
                 } else if (event.data.type === 'VIDEOS_CACHING_COMPLETE') {
                     setVideoDownloadStatus('complete');
-                    setDownloadProgress(prev => ({ cachedCount: prev.totalCount, totalCount: prev.totalCount }));
+                    setDownloadProgress({ cachedCount: event.data.cachedCount, totalCount: event.data.totalCount });
                     if (sendClientStatusInternal.current) {
-                        sendClientStatusInternal.current({ videoDownloadStatus: 'complete', downloadProgress: { cachedCount: videoListRef.current.length, totalCount: videoListRef.current.length } });
+                        sendClientStatusInternal.current({ 
+                            videoDownloadStatus: 'complete', 
+                            downloadProgress: { cachedCount: event.data.cachedCount, totalCount: event.data.totalCount } 
+                        });
                     }
                 } else if (event.data.type === 'VIDEOS_CACHING_ERROR') {
                     setVideoDownloadStatus('error');
+                    setDownloadProgress({ cachedCount: event.data.cachedCount, totalCount: event.data.totalCount });
                     if (sendClientStatusInternal.current) {
-                        sendClientStatusInternal.current({ videoDownloadStatus: 'error', error: event.data.error });
+                        sendClientStatusInternal.current({ 
+                            videoDownloadStatus: 'error', 
+                            error: event.data.error,
+                            downloadProgress: { cachedCount: event.data.cachedCount, totalCount: event.data.totalCount }
+                        });
                     }
                 }
             };
@@ -301,21 +309,21 @@ function App() {
     }, [currentVideoFilename]);
 
     const handleVideoPlay = useCallback(() => {
-        if (document.hidden) return; // Non inviare update se la pagina non è visibile
+        if (document.hidden) return;
         if (sendClientStatusInternal.current) {
             sendClientStatusInternal.current({ clientVideoStatus: 'playing' });
         }
     }, []);
 
     const handleVideoPause = useCallback(() => {
-        if (document.hidden) return; // Non inviare update se la pagina non è visibile
+        if (document.hidden) return;
         if (sendClientStatusInternal.current) {
             sendClientStatusInternal.current({ clientVideoStatus: 'paused' });
         }
     }, []);
 
     const handleVideoEnded = useCallback(() => {
-        if (document.hidden) return; // Non inviare update se la pagina non è visibile
+        if (document.hidden) return;
         if (sendClientStatusInternal.current) {
             sendClientStatusInternal.current({ clientVideoStatus: 'ended' });
         }
