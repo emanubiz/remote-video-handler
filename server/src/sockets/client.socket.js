@@ -21,7 +21,6 @@ module.exports = (io, socket) => {
         io.emit('clientListUpdate', clientsService.getClientsListForApi());
     });
 
-    // Evento per forzare la risincronizzazione su richiesta dell'admin
     socket.on('requestAdminStateSync', () => {
         console.log(`[SERVER] Ricevuta richiesta di sync dallo socket ${socket.id}. Invio stato aggiornato.`);
         socket.emit('clientListUpdate', clientsService.getClientsListForApi());
@@ -32,14 +31,13 @@ module.exports = (io, socket) => {
 
         const updatedClients = clientsService.handleAdminCommand(targetClientId, command, videoId, opacity);
 
-        // Invia i comandi ai socket specifici
         updatedClients.forEach(client => {
             if (io.sockets.sockets.has(client.socketId)) {
                 io.to(client.socketId).emit('videoCommand', {
                     command,
-                    videoId: client.currentVideoId, // Usa il videoId aggiornato dal servizio
-                    videoFilename: client.currentVideoFilename, // Usa il filename aggiornato dal servizio
-                    opacity: client.opacity // Usa l'opacità aggiornata dal servizio
+                    videoId: client.currentVideoId,
+                    videoFilename: client.currentVideoFilename,
+                    opacity: client.opacity
                 });
             } else {
                 console.warn(`[SERVER] Socket non trovato per client ${client.clientId} durante comando ${command}`);

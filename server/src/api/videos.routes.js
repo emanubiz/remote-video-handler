@@ -5,7 +5,6 @@ const fs = require('fs');
 
 const videosPath = path.join(__dirname, '..', '..', 'static', 'videos');
 
-// Estensioni video supportate
 const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.ogg', '.mov'];
 
 router.get('/videos', (req, res) => {

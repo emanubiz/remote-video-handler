@@ -89,21 +89,20 @@ function App() {
                 videoId,
                 opacity: newOpacity
             }); 
-            if (command === 'changeVideo') {
-                console.log("AOAO")
-            fetchClients();
-        }
+            setTimeout(fetchClients, 200);
         }
     };
 
     const sendClientCommand = (targetClientId, command) => {
         let videoIdToUse = selectedVideoId;
 
-        if (command === 'changeVideo' && targetClientId !== 'all') {
-            if (selectRefs.current[targetClientId] && selectRefs.current[targetClientId].value) {
-                videoIdToUse = selectRefs.current[targetClientId].value;
-            } else {
-                videoIdToUse = clientSelectedVideos[targetClientId] || selectedVideoId;
+        if (command === 'changeVideoAndPlay' || command === 'changeVideo') {
+            if (targetClientId !== 'all') {
+                if (selectRefs.current[targetClientId] && selectRefs.current[targetClientId].value) {
+                    videoIdToUse = selectRefs.current[targetClientId].value;
+                } else {
+                    videoIdToUse = clientSelectedVideos[targetClientId] || selectedVideoId;
+                }
             }
         } else if (targetClientId !== 'all') {
             videoIdToUse = clientSelectedVideos[targetClientId] || selectedVideoId;
@@ -127,8 +126,6 @@ function App() {
         return (client.videoDownloadStatus || 'pending').toUpperCase();
     };
 
-    const isAnythingPlaying = clients.some(c => c.clientVideoStatus === 'playing');
-
     return (
         <div className="AdminApp">
             <h1>Dashboard Amministratore</h1>
@@ -137,8 +134,8 @@ function App() {
                 <h2>Pannello di Controllo Globale</h2>
 
                 <div className="global-controls-panel">
-                    <button onClick={() => sendClientCommand('all', 'play')}>▶️</button>
-                    <button onClick={() => sendClientCommand('all', 'pause')}>⏸️</button>
+                    <button onClick={() => sendClientCommand('all', 'play')}>▶️ Play Tutti</button>
+                    <button onClick={() => sendClientCommand('all', 'pause')}>⏸️ Pausa Tutti</button>
                 </div>
 
                 <div className="video-selection">
@@ -146,14 +143,13 @@ function App() {
                     <select
                         value={selectedVideoId}
                         onChange={(e) => setSelectedVideoId(e.target.value)}
-                        disabled={isAnythingPlaying}
                     >
                         {videos.map(video => (
                             <option key={video.id} value={video.id}>{video.name}</option>
                         ))}
                     </select>
-                    <button onClick={() => sendClientCommand('all', 'changeVideo')} disabled={isAnythingPlaying}>
-                        Carica su Tutti
+                    <button onClick={() => sendClientCommand('all', 'changeVideoAndPlay')}>
+                        Carica e Avvia su Tutti
                     </button>
                 </div>
             </div>
@@ -166,7 +162,6 @@ function App() {
                     <ul className="client-list">
                         {clients.map(client => {
                             const isPlaying = client.clientVideoStatus === 'playing';
-                            const canChangeVideo = !isPlaying;
 
                             return (
                                 <li key={client.clientId} className="client-item">
@@ -185,7 +180,6 @@ function App() {
                                             ref={el => (selectRefs.current[client.clientId] = el)}
                                             value={clientSelectedVideos[client.clientId] || client.currentVideoId || selectedVideoId}
                                             onChange={(e) => handleClientVideoChange(client.clientId, e.target.value)}
-                                            disabled={!canChangeVideo}
                                         >
                                             {videos.map(video => (
                                                 <option key={video.id} value={video.id}>{video.name}</option>
@@ -205,10 +199,10 @@ function App() {
 
                                     <div className="client-actions">
                                         <button
-                                            onClick={() => sendClientCommand(client.clientId, 'changeVideo')}
-                                            disabled={isPlaying}
+                                            onClick={() => sendClientCommand(client.clientId, 'changeVideoAndPlay')}
+                                            disabled={client.videoDownloadStatus !== 'complete'}
                                         >
-                                            Carica
+                                            Carica e Avvia
                                         </button>
                                         <button
                                             onClick={() => sendClientCommand(client.clientId, isPlaying ? 'pause' : 'play')}
