@@ -3,15 +3,10 @@ const fs = require('fs');
 
 const clients = {};
 
-// Path alla cartella dei video
 const videosPath = path.join(__dirname, '..','..', 'static', 'videos');
 
-// Estensioni video supportate
 const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.ogg', '.mov'];
 
-/**
- * Legge la cartella e restituisce la lista dei video disponibili
- */
 const getAvailableVideos = () => {
     try {
         const files = fs.readdirSync(videosPath);
@@ -93,11 +88,15 @@ const handleAdminCommand = (targetClientId, command, videoId, opacity) => {
     const videoToPlay = availableVideos.find(v => v.id === videoId || v.filename === videoId);
 
     const applyCommandToClient = (client) => {
-        if (command === 'changeVideo') {
+        if (command === 'changeVideo' || command === 'changeVideoAndPlay') {
             if (videoToPlay) {
                 client.currentVideoId = videoToPlay.id;
                 client.currentVideoFilename = videoToPlay.filename;
-                client.clientVideoStatus = 'paused';  // Coerenza: cambio video => pausa
+                if (command === 'changeVideoAndPlay') {
+                    client.clientVideoStatus = 'playing'; 
+                } else {
+                    client.clientVideoStatus = 'paused';
+                }
             } else {
                 console.warn(`[SERVICE] Video "${videoId}" non trovato`);
             }
@@ -105,6 +104,13 @@ const handleAdminCommand = (targetClientId, command, videoId, opacity) => {
 
         if (command === 'setOpacity') {
             client.opacity = opacity;
+        }
+        
+        if (command === 'play') {
+            client.clientVideoStatus = 'playing';
+        }
+        if (command === 'pause') {
+            client.clientVideoStatus = 'paused';
         }
 
         clientsToUpdate.push(client);
