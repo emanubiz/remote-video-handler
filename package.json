@@ -9,6 +9,7 @@
     "dev:server": "nodemon server/src/server.js",
     "dev:client": "npm start --prefix client-webapp",
     "dev:admin": "npm start --prefix admin-frontend",
+    "start:bridge": "node server/src/bridge/osc-bridge.js",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:admin\"",
     "clean:build": "rimraf server/static/client-webapp server/static/admin-frontend",
     "copy:client": "node -e \"require('fs').cpSync('client-webapp/build', 'server/static/client-webapp', {recursive: true, force: true})\"",
@@ -16,7 +17,7 @@
     "client:build": "set PUBLIC_URL=/client&& npm run build --prefix client-webapp && npm run copy:client",
     "admin:build": "npm run build --prefix admin-frontend && npm run copy:admin",
     "build:all": "npm run clean:build && npm run client:build && npm run admin:build",
-    "start": "npm run build:all && npm run server"
+    "start": "npm run build:all && concurrently \"npm run server\" \"npm run start:bridge\""
   },
   "keywords": [],
   "author": "",
@@ -28,6 +29,7 @@
     "concurrently": "^8.2.2",
     "cors": "^2.8.5",
     "express": "^4.19.2",
+    "node-osc": "^9.1.7",
     "nodemon": "^3.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

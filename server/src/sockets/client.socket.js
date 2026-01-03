@@ -26,6 +26,12 @@ module.exports = (io, socket) => {
         socket.emit('clientListUpdate', clientsService.getClientsListForApi());
     });
 
+    socket.on('requestVideoList', () => {
+        console.log(`[SERVER] Ricevuta richiesta lista video da socket ${socket.id}.`);
+        const videoList = clientsService.getAvailableVideos();
+        socket.emit('videoListUpdate', videoList);
+    });
+
     socket.on('adminCommand', ({ targetClientId, command, videoId, videoFilename, opacity }) => {
         console.log(`[SERVER] Comando admin ricevuto: "${command}" per ${targetClientId || 'tutti i client'} | Video: ${videoId} | Opacità: ${opacity}`);
 

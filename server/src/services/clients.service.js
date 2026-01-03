@@ -141,4 +141,5 @@ module.exports = {
     updateClientStatus,
     handleAdminCommand,
     disconnectClient,
+    getAvailableVideos,
 };

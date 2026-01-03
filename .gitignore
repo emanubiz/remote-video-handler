@@ -7,3 +7,6 @@
 /server/static/admin-frontend
 /server/static/client-webapp
 /remote-video-handler.tar
+/.env
+/cert/server.crt
+/cert/server.key
