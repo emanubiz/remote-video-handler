@@ -64,6 +64,7 @@ const oscServer = new OscServer(OSC_LISTEN_PORT, OSC_LISTEN_HOST, () => {
     console.log('  /command/changeVideoAndPlay <string:videoId>');
     console.log('  /command/setOpacity <float:opacityValue (0.0-1.0)>');
     console.log('  /command/setTarget <string:targetClientId> (usa "all" per tutti)');
+    console.log('  /composition/layers/1/clips/1/connect (riproduce video2.mp4)'); // Aggiunto per chiarezza
     console.log('-----------------------------------');
 });
 
@@ -88,8 +89,10 @@ oscServer.on('message', (msg) => {
             return;
 
         case '/composition/layers/1/clips/1/connect':
-            console.log('[BRIDGE] Prova comunicazione...');
-            return;
+            console.log('[BRIDGE] Comando Resolume: riproduzione di video2.mp4...');
+            commandPayload.command = 'changeVideoAndPlay';
+            commandPayload.videoId = 'video2.mp4'; // Imposta direttamente il video desiderato
+            break;
             
 
         case '/command/getTargets':

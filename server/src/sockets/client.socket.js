@@ -1,21 +1,40 @@
 const clientsService = require('../services/clients.service'); 
 
 module.exports = (io, socket) => {
-    socket.on('registerClient', (clientId) => {
-        const clientCurrentState = clientsService.registerClient(clientId, socket.id);
+    socket.on('registerClient', ({ suggestedId, nickname }) => {
+        let clientIdToRegister = suggestedId;
+        let finalNickname = nickname;
+    
+        // Verifica se l'ID è nullo/vuoto o già connesso
+        if (!suggestedId || clientsService.isClientIdAlreadyConnected(suggestedId)) {
+            clientIdToRegister = `client-${Math.random().toString(36).substring(2, 11)}`;
+            console.warn(`[SERVER] ID suggerito "${suggestedId}" non valido o già in uso. Generato nuovo ID: ${clientIdToRegister}`);
+        }
+    
+        // Verifica se il nickname è già in uso da un client connesso
+        if (clientsService.isNicknameInUse(finalNickname)) {
+            const originalNickname = finalNickname;
+            finalNickname = `${finalNickname}-${Math.floor(Math.random() * 1000)}`;
+            console.warn(`[SERVER] Nickname "${originalNickname}" già in uso. Nuovo nickname: ${finalNickname}`);
+            socket.emit('nicknameUpdated', finalNickname); // Notifica il client del nuovo nickname
+        }
+    
+        const clientCurrentState = clientsService.registerClient(clientIdToRegister, socket.id, finalNickname);
         io.emit('clientListUpdate', clientsService.getClientsListForApi());
         
         socket.emit('videoCommand', {
             command: 'updateState',
+            clientId: clientIdToRegister,
+            nickname: finalNickname, // Invia anche il nickname
             videoId: clientCurrentState.currentVideoId,
             videoFilename: clientCurrentState.currentVideoFilename,
             opacity: clientCurrentState.opacity,
             videoDownloadStatus: clientCurrentState.videoDownloadStatus,
-            downloadProgress: clientCurrentState.downloadProgress
+            downloadProgress: clientCurrentState.downloadProgress,
+            clientVideoStatus: clientCurrentState.clientVideoStatus
         });
-        console.log(`[SERVER] Inviato stato iniziale a ${clientId}. Video: ${clientCurrentState.currentVideoFilename || 'Nessuno'}`);
+        console.log(`[SERVER] Inviato stato iniziale a ${clientIdToRegister} (${finalNickname}). Video: ${clientCurrentState.currentVideoFilename || 'Nessuno'}`);
     });
-
     socket.on('clientStatusUpdate', (clientId, statusUpdate) => {
         clientsService.updateClientStatus(clientId, statusUpdate);
         io.emit('clientListUpdate', clientsService.getClientsListForApi());
@@ -43,7 +62,8 @@ module.exports = (io, socket) => {
                     command,
                     videoId: client.currentVideoId,
                     videoFilename: client.currentVideoFilename,
-                    opacity: client.opacity
+                    opacity: client.opacity,
+                    clientVideoStatus: client.clientVideoStatus // Invia lo stato del video per coerenza
                 });
             } else {
                 console.warn(`[SERVER] Socket non trovato per client ${client.clientId} durante comando ${command}`);
