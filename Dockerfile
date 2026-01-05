@@ -48,19 +48,10 @@ COPY start.sh ./
 COPY --from=client-builder /app/client-webapp/build ./client-webapp/build
 COPY --from=admin-builder /app/admin-frontend/build ./admin-frontend/build
 
-# Installa ngrok
-RUN apk add --no-cache curl \
-    && curl -s https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz -o ngrok.tgz \
-    && tar -xzf ngrok.tgz \
-    && mv ngrok /usr/local/bin/ngrok \
-    && rm ngrok.tgz
-
-# Installa qrcode-terminal globalmente (serve a start.sh)
-RUN npm install -g qrcode-terminal
 
 RUN chmod +x start.sh
 
-EXPOSE 3000 4040
+EXPOSE 3000
 
 ENV NODE_ENV=production
 
