@@ -1,35 +1,24 @@
-// --- START OF FILE App.js ---
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import './App.css';
-// import { Workbox } from 'workbox-window'; // <--- Commentato: Non importiamo più Workbox
 
 const SERVER_URL = window.location.origin;
 
-const generateClientId = () => {
-    let clientId = localStorage.getItem('clientId');
-    if (!clientId) {
-        clientId = `client-${Math.random().toString(36).substr(2, 9)}`;
-        localStorage.setItem('clientId', clientId);
-    }
-    return clientId;
-};
-
 function App() {
-    const [clientId] = useState(generateClientId());
+    const [clientId, setClientId] = useState(localStorage.getItem('clientId') || null);
+    const [nickname, setNickname] = useState(localStorage.getItem('nickname') || null);
+    const [pendingNickname, setPendingNickname] = useState(''); // Per l'input testuale
+    const [isRegistered, setIsRegistered] = useState(!!localStorage.getItem('nickname')); // Flag per indicare se il nickname è stato impostato
+
     const [currentVideoFilename, setCurrentVideoFilename] = useState(null);
     const [currentVideoId, setCurrentVideoId] = useState(null);
     const [status, setStatus] = useState('Connessione...');
     const [opacity, setOpacity] = useState(1);
-    // Manteniamo lo stato di download, ma senza l'interazione diretta con il SW per Workbox.
-    // Il download si riferirà alla capacità del browser di gestire la cache dei media.
     const [videoDownloadStatus, setVideoDownloadStatus] = useState('pending');
     const [downloadProgress, setDownloadProgress] = useState({ cachedCount: 0, totalCount: 0 });
 
     const videoRef = useRef(null);
     const socketRef = useRef(null);
-    // const workboxRef = useRef(null); // <--- Commentato: Non usiamo più workboxRef
     const isConnectingRef = useRef(false);
     const shouldAutoplayAfterLoad = useRef(false);
 
@@ -54,7 +43,7 @@ function App() {
 
     useEffect(() => {
         sendClientStatusInternal.current = (newStatusUpdate) => {
-            if (socketRef.current && socketRef.current.connected) {
+            if (socketRef.current && socketRef.current.connected && clientId) {
                 const currentClientState = {
                     status: statusRef.current,
                     clientVideoStatus: videoRef.current ? (videoRef.current.paused ? 'paused' : 'playing') : 'unknown',
@@ -63,13 +52,14 @@ function App() {
                     opacity: opacityRef.current,
                     videoDownloadStatus: videoDownloadStatusRef.current,
                     downloadProgress: downloadProgressRef.current,
+                    nickname: nickname,
                     ...newStatusUpdate
                 };
                 socketRef.current.emit('clientStatusUpdate', clientId, currentClientState);
                 console.log(`[CLIENT] Stato inviato al server per ${clientId}:`, currentClientState);
             }
         };
-    }, [clientId]);
+    }, [clientId, nickname]);
 
     const enterFullscreen = useCallback(() => {
         const elem = document.documentElement;
@@ -79,21 +69,14 @@ function App() {
         console.log('[CLIENT] Entrato in modalità Fullscreen.');
     }, []);
 
-    // La funzione preloadVideos ora non interagirà con il Service Worker,
-    // ma può essere usata per simulare o avviare un preload tradizionale se necessario.
-    // Per ora, la rendiamo una no-op (operazione nulla) per il contesto del SW.
-    // Se vuoi una logica di preload JavaScript personalizzata, andrebbe qui.
     const preloadVideos = useCallback(async () => {
         console.log('[CLIENT] La funzionalità di precaricamento video tramite Service Worker è disabilitata.');
-        // Puoi aggiungere qui la logica per ottenere la lista video se vuoi,
-        // ma non farà un caching proattivo come un SW.
         try {
             const response = await fetch(`${SERVER_URL}/api/videos`);
             const videos = await response.json();
             videoListRef.current = videos;
             console.log('[CLIENT] Lista video dal server (per riferimento):', videos);
 
-            // Se vuoi simulare un "completato" per i video semplicemente listati:
             setVideoDownloadStatus('complete');
             setDownloadProgress({ cachedCount: videos.length, totalCount: videos.length });
             if (sendClientStatusInternal.current) {
@@ -110,80 +93,17 @@ function App() {
     }, []);
 
     useEffect(() => {
-        // Nessun cleanup per il SW, in quanto non viene registrato qui
-        // let cleanupSW; // <--- Commentato
-        
-        // Rimuovi tutta la logica di inizializzazione e gestione di Workbox e del Service Worker.
-        // if ('serviceWorker' in navigator && typeof Workbox !== 'undefined') { // <--- Commentato
-        //     workboxRef.current = new Workbox('/client/service-worker.js'); // <--- Commentato
-        //     const wb = workboxRef.current; // <--- Commentato
-
-        //     const handleSWMessage = (event) => { // <--- Commentato
-        //         console.log('[CLIENT] Messaggio dal SW:', event.data); // <--- Commentato
-        //         if (event.data.type === 'VIDEOS_CACHING_PROGRESS') { // <--- Commentato
-        //             const { cachedCount, totalCount } = event.data; // <--- Commentato
-        //             setDownloadProgress({ cachedCount, totalCount }); // <--- Commentato
-        //             if (sendClientStatusInternal.current) { // <--- Commentato
-        //                 sendClientStatusInternal.current({ // <--- Commentato
-        //                     videoDownloadStatus: 'pending', // <--- Commentato
-        //                     downloadProgress: { cachedCount, totalCount } // <--- Commentato
-        //                 }); // <--- Commentato
-        //             } // <--- Commentato
-        //         } else if (event.data.type === 'VIDEOS_CACHING_COMPLETE') { // <--- Commentato
-        //             setVideoDownloadStatus('complete'); // <--- Commentato
-        //             setDownloadProgress({ cachedCount: event.data.cachedCount, totalCount: event.data.totalCount }); // <--- Commentato
-        //             if (sendClientStatusInternal.current) { // <--- Commentato
-        //                 sendClientStatusInternal.current({ // <--- Commentato
-        //                     videoDownloadStatus: 'complete', // <--- Commentato
-        //                     downloadProgress: { cachedCount: event.data.cachedCount, totalCount: event.data.totalCount } // <--- Commentato
-        //                 }); // <--- Commentato
-        //             } // <--- Commentato
-        //         } else if (event.data.type === 'VIDEOS_CACHING_ERROR') { // <--- Commentato
-        //             setVideoDownloadStatus('error'); // <--- Commentato
-        //             setDownloadProgress({ cachedCount: event.data.cachedCount, totalCount: event.data.totalCount }); // <--- Commentato
-        //             if (sendClientStatusInternal.current) { // <--- Commentato
-        //                 sendClientStatusInternal.current({ // <--- Commentato
-        //                     videoDownloadStatus: 'error', // <--- Commentato
-        //                     error: event.data.error, // <--- Commentato
-        //                     downloadProgress: { cachedCount: event.data.cachedCount, totalCount: event.data.totalCount } // <--- Commentato
-        //                 }); // <--- Commentato
-        //             } // <--- Commentato
-        //         } // <--- Commentato
-        //     }; // <--- Commentato
-
-        //     wb.addEventListener('message', handleSWMessage); // <--- Commentato
-
-        //     wb.register().then(registration => { // <--- Commentato: Questa è la riga che causava il SecurityError
-        //         console.log('[CLIENT] Service Worker registrato:', registration); // <--- Commentato
-        //         if (registration && registration.waiting) { // <--- Commentato
-        //             wb.messageSW({ type: 'SKIP_WAITING' }); // <--- Commentato
-        //         } // <--- Commentato
-        //     }).catch(error => { // <--- Commentato
-        //         console.error('[CLIENT] Errore durante la registrazione del Service Worker:', error); // <--- Commentato
-        //     }); // <--- Commentato
-
-        //     cleanupSW = () => { // <--- Commentato
-        //         if (wb) wb.removeEventListener('message', handleSWMessage); // <--- Commentato
-        //     }; // <--- Commentato
-        // } else { // <--- Commentato
-            console.warn('[CLIENT] Service Workers disabilitati o non supportati per scelta.');
-            setVideoDownloadStatus('not_supported'); // O un altro stato per indicare che non si usa SW
-            if (sendClientStatusInternal.current) {
-                sendClientStatusInternal.current({ videoDownloadStatus: 'not_supported' });
-            }
-        // } // <--- Commentato
-
-        // return () => { // <--- Commentato
-        //     if (cleanupSW) cleanupSW(); // <--- Commentato
-        // }; // <--- Commentato
-    }, []); // Nessuna dipendenza da workboxRef ora
-
+        console.warn('[CLIENT] Service Workers disabilitati o non supportati per scelta.');
+        setVideoDownloadStatus('not_supported');
+        if (sendClientStatusInternal.current) {
+            sendClientStatusInternal.current({ videoDownloadStatus: 'not_supported' });
+        }
+    }, []);
+    
     useEffect(() => {
-        if (isConnectingRef.current) return;
+        if (!isRegistered || isConnectingRef.current) return;
         isConnectingRef.current = true;
 
-        // Rimuovi il riferimento a workboxRef.current.register() e preloadVideos(workboxRef.current)
-        // Chiama preloadVideos direttamente, ora che è una funzione "non-SW"
         preloadVideos();
 
         socketRef.current = io(SERVER_URL, {
@@ -195,9 +115,9 @@ function App() {
         socketRef.current.on('connect', () => {
             console.log('[CLIENT] Connesso al server Socket.IO');
             setStatus('Connesso');
-            socketRef.current.emit('registerClient', clientId);
+            // Invia l'ID del client (preso da localStorage) e il nickname
+            socketRef.current.emit('registerClient', { suggestedId: clientId, nickname });
             isConnectingRef.current = false;
-            if (sendClientStatusInternal.current) sendClientStatusInternal.current({});
         });
 
         socketRef.current.on('connect_error', (error) => {
@@ -211,8 +131,26 @@ function App() {
             setStatus('Disconnesso');
         });
 
-        socketRef.current.on('videoCommand', ({ command, videoId, videoFilename, opacity: newOpacity }) => {
-            console.log('[CLIENT] Comando video ricevuto:', { command, videoId, videoFilename, newOpacity });
+        socketRef.current.on('nicknameUpdated', (newNickname) => {
+            console.log(`[CLIENT] Nickname aggiornato dal server: ${newNickname}`);
+            setNickname(newNickname);
+            localStorage.setItem('nickname', newNickname);
+        });
+
+        socketRef.current.on('videoCommand', ({ command, videoId, videoFilename, opacity: newOpacity, clientVideoStatus: newVideoStatus, clientId: assignedClientId, nickname: assignedNickname }) => {
+            console.log('[CLIENT] Comando video ricevuto:', { command, videoId, videoFilename, newOpacity, newVideoStatus, assignedClientId, assignedNickname });
+
+            if (assignedClientId && assignedClientId !== clientId) {
+                setClientId(assignedClientId);
+                localStorage.setItem('clientId', assignedClientId);
+                console.log(`[CLIENT] Assegnato/Aggiornato ID dal server: ${assignedClientId}`);
+            }
+
+            if (assignedNickname && assignedNickname !== nickname) {
+                setNickname(assignedNickname);
+                localStorage.setItem('nickname', assignedNickname);
+                console.log(`[CLIENT] Assegnato/Aggiornato Nickname dal server: ${assignedNickname}`);
+            }
 
             let statusUpdate = {};
             let clientStateChanged = false;
@@ -224,19 +162,19 @@ function App() {
                         setCurrentVideoFilename(videoFilename);
                         console.log(`[CLIENT] Cambio video a: ${videoFilename}`);
                         clientStateChanged = true;
-                        shouldAutoplayAfterLoad.current = true; // Set flag to autoplay after load
+                        shouldAutoplayAfterLoad.current = false;
                     }
                     break;
 
                 case 'changeVideoAndPlay':
                     if (videoId !== currentVideoIdRef.current || videoFilename !== currentVideoFilenameRef.current) {
                         setCurrentVideoId(videoId);
-                        setCurrentVideoFilename(videoFilename);
+setCurrentVideoFilename(videoFilename);
                         console.log(`[CLIENT] Cambio video a: ${videoFilename} e avvio riproduzione.`);
                         clientStateChanged = true;
-                        shouldAutoplayAfterLoad.current = true; // Set flag to autoplay after load
+                        shouldAutoplayAfterLoad.current = true;
                     } else {
-                        shouldAutoplayAfterLoad.current = true; // Set flag to autoplay if same video
+                        shouldAutoplayAfterLoad.current = true;
                     }
                     break;
 
@@ -245,7 +183,7 @@ function App() {
                         videoRef.current.play().catch(e => console.error("[CLIENT] Errore play:", e));
                         statusUpdate.clientVideoStatus = 'playing';
                         clientStateChanged = true;
-                        shouldAutoplayAfterLoad.current = true; // Ensure play is attempted
+                        shouldAutoplayAfterLoad.current = true;
                     }
                     break;
 
@@ -267,6 +205,15 @@ function App() {
                     break;
 
                 case 'updateState':
+                    if (assignedClientId && assignedClientId !== clientId) {
+                        setClientId(assignedClientId);
+                        localStorage.setItem('clientId', assignedClientId);
+                    }
+                    if (assignedNickname && assignedNickname !== nickname) {
+                        setNickname(assignedNickname);
+                        localStorage.setItem('nickname', assignedNickname);
+                    }
+                    
                     if (videoId !== undefined && videoFilename !== undefined && (videoId !== currentVideoIdRef.current || videoFilename !== currentVideoFilenameRef.current)) {
                         setCurrentVideoId(videoId);
                         setCurrentVideoFilename(videoFilename);
@@ -274,6 +221,13 @@ function App() {
                     }
                     if (typeof newOpacity === 'number' && newOpacity !== opacityRef.current) {
                         setOpacity(newOpacity);
+                        clientStateChanged = true;
+                    }
+                    if (newVideoStatus && newVideoStatus === 'playing' && videoRef.current && videoRef.current.paused) {
+                        videoRef.current.play().catch(e => console.error("[CLIENT] Errore play in updateState:", e));
+                        clientStateChanged = true;
+                    } else if (newVideoStatus === 'paused' && videoRef.current && !videoRef.current.paused) {
+                        videoRef.current.pause();
                         clientStateChanged = true;
                     }
                     break;
@@ -296,7 +250,7 @@ function App() {
             }
             isConnectingRef.current = false;
         };
-    }, [clientId, preloadVideos]);
+    }, [isRegistered, clientId, nickname, preloadVideos]);
 
     useEffect(() => {
         if (videoRef.current && currentVideoFilename) {
@@ -332,25 +286,54 @@ function App() {
     const handleLoadedData = useCallback(() => {
         if (shouldAutoplayAfterLoad.current && videoRef.current) {
             videoRef.current.play().catch(e => console.error("[CLIENT] Errore nell'autoplay dopo caricamento dati:", e));
-            shouldAutoplayAfterLoad.current = false; // Reset the flag
+            shouldAutoplayAfterLoad.current = false;
             if (sendClientStatusInternal.current) {
                 sendClientStatusInternal.current({ clientVideoStatus: 'playing' });
             }
         }
     }, []);
 
-
     const displayDownloadStatus = () => {
-        // La logica di download è ora più generica e non legata allo stato specifico del SW.
-        // Puoi adattarla in base a come vuoi rappresentare il "download" senza un SW.
         if (videoDownloadStatus === 'pending' && downloadProgress.totalCount > 0) {
-            // Se in futuro implementerai un download manager JS personalizzato, potresti aggiornare questo.
             return `SCARICAMENTO (browser): ${downloadProgress.cachedCount}/${downloadProgress.totalCount}`;
         } else if (videoDownloadStatus === 'not_supported') {
             return 'NON SUPPORTATO (SW disabilitato)';
         }
         return videoDownloadStatus.toUpperCase();
     };
+
+    const handleConnect = () => {
+        if (pendingNickname.trim()) {
+            const finalNickname = pendingNickname.trim();
+            setNickname(finalNickname);
+            localStorage.setItem('nickname', finalNickname);
+            setIsRegistered(true);
+
+            // Se non c'è un clientId, non fa nulla qui. La registrazione avverrà nell'useEffect
+        } else {
+            alert('Per favore, inserisci un nickname.');
+        }
+    };
+
+    if (!isRegistered) {
+        return (
+            <div className="App name-input-screen">
+                <div className="name-input-container">
+                    <h1>Scegli un Nickname</h1>
+                    <input
+                        type="text"
+                        value={pendingNickname}
+                        onChange={(e) => setPendingNickname(e.target.value)}
+                        placeholder="Es: Il tuo nickname"
+                        onKeyPress={(e) => {
+                            if (e.key === 'Enter') handleConnect();
+                        }}
+                    />
+                    <button onClick={handleConnect}>Connetti</button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="App" onClick={enterFullscreen} onTouchStart={enterFullscreen} style={{ opacity: opacity }}>
@@ -373,7 +356,8 @@ function App() {
                 )}
                 <div className="overlay-info">
                     <p>Stato: {status}</p>
-                    <p>ID Client: {clientId}</p>
+                    <p>ID Client: {clientId || 'In attesa...'}</p>
+                    <p>Nickname: {nickname}</p>
                     <p>Video: {currentVideoFilename || 'Nessuno'}</p>
                     <p>Download Video: <span className={`status-${videoDownloadStatus}`}>{displayDownloadStatus()}</span></p>
                     <p>Clicca/Tocca per Fullscreen</p>
